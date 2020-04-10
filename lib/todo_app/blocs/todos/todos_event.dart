@@ -39,3 +39,12 @@ class TodoDeleted extends TodosEvent {
   @override
   String toString() => 'TodoDeleted { todo: $todo }';
 }
+
+class TodosUpdated extends TodosEvent {
+  final List<Todo> todos;
+
+  const TodosUpdated(this.todos);
+
+  @override
+  List<Object> get props => [todos];
+}
