@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_playground/todo_app/blocs/todos/bloc.dart';
+import 'package:flutter_playground/todo_app/blocs/blocs.dart';
 import 'package:flutter_playground/todo_app/models/models.dart';
-import 'package:flutter_playground/todo_app/repository/sql_todos_repository.dart';
+import 'package:flutter_playground/todo_app/repository/sqlbrite_todos_repository.dart';
 import 'package:flutter_playground/todo_app/screens/add_todo_screen.dart';
 import 'package:flutter_playground/todo_app/screens/todo_screen.dart';
 
@@ -14,27 +14,42 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<TodosBloc>(
       create: (context) =>
-          TodosBloc(todosRepository: SqlTodosRepository.db)..add(TodosLoaded()),
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
+          TodosBloc(todosRepository: SqlBriteTodosRepository.db)
+            ..add(TodosLoaded()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<TabBloc>(create: (context) => TabBloc()),
+          BlocProvider<FilteredTodosBloc>(
+            create: (context) => FilteredTodosBloc(
+                todosBloc: BlocProvider.of<TodosBloc>(context)),
+          ),
+          BlocProvider<StatsBloc>(
+            create: (context) => StatsBloc(
+              todosBloc: BlocProvider.of<TodosBloc>(context),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          title: 'Flutter Demo',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          routes: {
+            '/': (context) => TodoScreen(),
+            '/addTodo': (context) => AddTodoScreen(
+                  onSave: (title, description) {
+                    BlocProvider.of<TodosBloc>(context).add(
+                      TodoAdded(Todo(title, description: description)),
+                    );
+                  },
+                )
+          },
+          //  home: TodoScreen()
+          /*BlocProvider<CounterBloc>(
+              create: (context) => CounterBloc(),
+              child: MyHomePage(title: 'Flutter Demo Home Page')),*/
         ),
-        routes: {
-          '/': (context) => TodoScreen(),
-          '/addTodo': (context) => AddTodoScreen(
-                onSave: (title, description) {
-                  BlocProvider.of<TodosBloc>(context).add(
-                    TodoAdded(Todo(title, description: description)),
-                  );
-                },
-              )
-        },
-        //  home: TodoScreen()
-        /*BlocProvider<CounterBloc>(
-            create: (context) => CounterBloc(),
-            child: MyHomePage(title: 'Flutter Demo Home Page')),*/
       ),
     );
   }
